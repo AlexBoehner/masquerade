@@ -107,20 +107,28 @@ namespace PgMaskingProxy
                 loadState();
                 _configHasChanged = false;
             }
+
+            /**
+             * 
+             *  Change default masking from implicit to none
+             *  Change the explicit masking for columns to use implicit maskingtype             
+             *             
+             * */            
+            // Explicit column masking
             (string table, string schema) = _state._oidToTableSchemaName[tableOid];
             var maskedColumn = _state._maskingModel.MaskedColumns.FirstOrDefault(x=>x.ColumnName==columnName && x.TableName == table && x.SchemaName == schema);
             if(maskedColumn!=null)
             {
-                return maskedColumn.MaskingFunction;
+                var dataType = Enum.GetName(typeof(PostgresDataTypes), _state._oidToDataType[dataTypeOid]);
+                var maskedDataType = _state._maskingModel.MaskedDataTypes.FirstOrDefault(x => x.DataType == dataType);
+                if (maskedDataType != null)
+                {
+                    return maskedDataType.MaskingFunction;
+                }
+
             }
 
-            var dataType = Enum.GetName(typeof(PostgresDataTypes), _state._oidToDataType[dataTypeOid]);
-            var maskedDataType = _state._maskingModel.MaskedDataTypes.FirstOrDefault(x=>x.DataType==dataType);
-            if(maskedDataType!=null)
-            {
-                return maskedDataType.MaskingFunction;
-            }
-
+            // Default, no column masking
             return (s) => s;
         }
 
